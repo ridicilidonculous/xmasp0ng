@@ -1,0 +1,765 @@
+<html><head><base href="." /><meta charset="UTF-8" /><meta content="width=device-width, initial-scale=1.0" name="viewport" /><title>Enhanced Pong Game</title><style>
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #1a2c3d; /* Darker blue for night sky effect */
+    font-family: 'Rubik Mono One', sans-serif;
+    overflow: hidden;
+}
+
+.snow {
+    position: fixed;
+    top: -10px;
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: snowfall linear infinite;
+}
+
+@keyframes snowfall {
+    0% {
+        transform: translateY(-10px) translateX(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+#gameCanvas {
+    border: 4px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(2px);
+    display: none;
+}
+
+.score {
+    color: white;
+    position: absolute;
+    top: 20px;
+    font-size: 72px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    animation: glow 2s ease-in-out infinite alternate;
+    letter-spacing: 4px;
+    display: none;
+}
+
+.coins {
+    color: gold;
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 36px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    animation: glow 2s ease-in-out infinite alternate;
+    display: none;
+}
+
+#mainMenu, #shopMenu {
+    color: white;
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    border-radius: 20px;
+    border: 2px solid #ff424f;
+    box-shadow: 0 0 20px rgba(255, 66, 79, 0.3);
+}
+
+#mainMenu h1 {
+    color: #ff424f;
+    text-shadow: 0 0 10px rgba(255, 66, 79, 0.5);
+    font-size: 72px;
+}
+
+.menu-button {
+    background: linear-gradient(45deg, #ff424f, #28a745);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    margin: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: transform 0.2s;
+}
+
+.menu-button:hover {
+    transform: scale(1.1);
+}
+
+#shopMenu {
+    display: none;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 30px;
+    border-radius: 15px;
+    min-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.shop-item {
+    background: rgba(255, 255, 255, 0.1);
+    margin: 15px 0;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.shop-item:hover {
+    transform: scale(1.02);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.shop-item button {
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: black;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.shop-item button:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.shop-item button:disabled {
+    background: linear-gradient(45deg, #666, #444);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.event-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    color: #22292C;
+    padding: 20px 40px;
+    border-radius: 10px;
+    font-size: 24px;
+    animation: fadeInOut 1s ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+    to { text-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
+}
+
+#player1Score { left: 5%; }
+#player2Score { right: 5%; }
+
+.particle {
+    position: absolute;
+    pointer-events: none;
+    background: white;
+    border-radius: 50%;
+    animation: particleAnimation 1s ease-out forwards;
+}
+
+@keyframes particleAnimation {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+}
+
+#questPanel {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    width: 250px;
+    display: none;
+}
+
+.quest-item {
+    background: rgba(40, 167, 69, 0.1);
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #28a745;
+}
+
+.quest-progress {
+    height: 5px;
+    background: #ddd;
+    margin-top: 5px;
+    border-radius: 3px;
+}
+
+.quest-progress-bar {
+    height: 100%;
+    background: #28a745;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&display=swap" rel="stylesheet"></head>
+<body>
+<div id="mainMenu">
+    <h1>PONG</h1>
+    <button class="menu-button" onclick="startGame()">Play Game</button>
+    <button class="menu-button" onclick="showShop()">Shop</button>
+</div>
+
+<div id="shopMenu">
+    <h2>Shop</h2>
+    <div id="shopItems"></div>
+    <button class="back-button" onclick="hideShop()">Back</button>
+</div>
+
+<div class="coins">Coins: <span id="coinCount">0</span></div>
+<div id="player1Score" class="score">0</div>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<div id="player2Score" class="score">0</div>
+<div id="questPanel"></div>
+
+<script>
+// Load saved data
+let coins = parseInt(localStorage.getItem('pongCoins')) || 0;
+let gameActive = false;
+let unlockedItems = JSON.parse(localStorage.getItem('unlockedItems')) || [];
+let equippedPaddle = localStorage.getItem('equippedPaddle') || 'default';
+let equippedBall = localStorage.getItem('equippedBall') || 'default';
+
+// Add this before the christmasShopItems definition:
+const shopItems = [
+    { id: 'rainbow_paddle', name: 'Rainbow Paddle', price: 200, type: 'paddle' },
+    { id: 'gold_paddle', name: 'Gold Paddle', price: 300, type: 'paddle' },
+    { id: 'neon_ball', name: 'Neon Ball', price: 150, type: 'ball' },
+    { id: 'fire_ball', name: 'Fire Ball', price: 250, type: 'ball' }
+];
+
+// Then the Christmas items can be added:
+const christmasShopItems = [
+    { id: 'santa_paddle', name: 'Santa Paddle', price: 100, type: 'paddle', holiday: 'christmas' },
+    { id: 'candy_cane_paddle', name: 'Candy Cane Paddle', price: 150, type: 'paddle', holiday: 'christmas' },
+    { id: 'elf_paddle', name: 'Elf Paddle', price: 200, type: 'paddle', holiday: 'christmas' },
+    { id: 'ornament_ball', name: 'Ornament Ball', price: 80, type: 'ball', holiday: 'christmas' },
+    { id: 'snow_ball', name: 'Snow Ball', price: 120, type: 'ball', holiday: 'christmas' },
+    { id: 'gift_ball', name: 'Gift Box Ball', price: 180, type: 'ball', holiday: 'christmas' }
+];
+
+shopItems.push(...christmasShopItems);
+
+const christmasQuests = [
+    {
+        id: 'score_50',
+        name: 'Score 50 Points',
+        target: 50,
+        progress: 0,
+        reward: 100,
+        description: 'Score 50 points to earn 100 coins!'
+    },
+    {
+        id: 'hit_streak',
+        name: 'Holiday Rally',
+        target: 20,
+        progress: 0,
+        reward: 150,
+        description: 'Keep the ball in play for 20 hits'
+    },
+    {
+        id: 'win_games',
+        name: 'Christmas Champion',
+        target: 5,
+        progress: 0,
+        reward: 200,
+        description: 'Win 5 games'
+    }
+];
+
+let activeQuests = [...christmasQuests];
+
+function createSnowflakes() {
+    const snowflake = document.createElement('div');
+    snowflake.className = 'snow';
+    snowflake.style.left = Math.random() * window.innerWidth + 'px';
+    snowflake.style.opacity = Math.random();
+    snowflake.style.animation = `snowfall ${Math.random() * 3 + 2}s linear infinite`;
+    document.body.appendChild(snowflake);
+    
+    setTimeout(() => snowflake.remove(), 5000);
+}
+
+setInterval(createSnowflakes, 100);
+
+document.getElementById('coinCount').textContent = coins;
+
+function startGame() {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('gameCanvas').style.display = 'block';
+    document.getElementById('player1Score').style.display = 'block';
+    document.getElementById('player2Score').style.display = 'block';
+    document.querySelector('.coins').style.display = 'block';
+    gameActive = true;
+    resetBall();
+    gameLoop();
+}
+
+function showShop() {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('shopMenu').style.display = 'block';
+    updateShopDisplay();
+}
+
+function hideShop() {
+    document.getElementById('shopMenu').style.display = 'none';
+    document.getElementById('mainMenu').style.display = 'block';
+}
+
+function updateShopDisplay() {
+    const shopContainer = document.getElementById('shopItems');
+    shopContainer.innerHTML = '';
+    
+    shopItems.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'shop-item';
+        const isUnlocked = unlockedItems.includes(item.id);
+        const isEquipped = (item.type === 'paddle' && equippedPaddle === item.id) ||
+                          (item.type === 'ball' && equippedBall === item.id);
+        
+        itemDiv.innerHTML = `
+            <span>${item.name} - ${item.price} coins</span>
+            <button onclick="handleShopItem('${item.id}')" 
+                    ${isUnlocked ? '' : (coins < item.price ? 'disabled' : '')}>
+                ${isUnlocked ? (isEquipped ? 'Equipped' : 'Equip') : 'Buy'}
+            </button>
+        `;
+        shopContainer.appendChild(itemDiv);
+    });
+}
+
+function handleShopItem(itemId) {
+    const item = shopItems.find(i => i.id === itemId);
+    if (!item) return;
+
+    if (unlockedItems.includes(itemId)) {
+        // Equip item
+        if (item.type === 'paddle') {
+            equippedPaddle = itemId;
+            localStorage.setItem('equippedPaddle', itemId);
+        } else if (item.type === 'ball') {
+            equippedBall = itemId;
+            localStorage.setItem('equippedBall', itemId);
+        }
+    } else if (coins >= item.price) {
+        // Buy item
+        coins -= item.price;
+        unlockedItems.push(itemId);
+        localStorage.setItem('pongCoins', coins);
+        localStorage.setItem('unlockedItems', JSON.stringify(unlockedItems));
+        document.getElementById('coinCount').textContent = coins;
+    }
+    
+    updateShopDisplay();
+}
+
+function addCoins(amount) {
+    coins += amount;
+    localStorage.setItem('pongCoins', coins);
+    document.getElementById('coinCount').textContent = coins;
+}
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const player1ScoreElement = document.getElementById('player1Score');
+const player2ScoreElement = document.getElementById('player2Score');
+
+const ball = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    radius: 10,
+    speed: 7,
+    dx: 5,
+    dy: 5,
+    trail: []
+};
+
+const paddleHeight = 100;
+const paddleWidth = 10;
+const paddle1 = {
+    x: 0,
+    y: canvas.height / 2 - paddleHeight / 2,
+    width: paddleWidth,
+    height: paddleHeight,
+    dy: 8,
+    maxSpeed: 16,
+    acceleration: 0.5,
+    currentSpeed: 8,
+    score: 0
+};
+
+const paddle2 = {
+    x: canvas.width - paddleWidth,
+    y: canvas.height / 2 - paddleHeight / 2,
+    width: paddleWidth,
+    height: paddleHeight,
+    dy: 8,
+    maxSpeed: 16,
+    acceleration: 0.5,
+    currentSpeed: 8,
+    score: 0,
+    aiMistakeCounter: 0
+};
+
+const keys = {
+    w: false,
+    s: false,
+    a: false,
+    d: false
+};
+
+let lastMoveTime = Date.now();
+const speedDecayRate = 0.2;
+
+document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() in keys) {
+        keys[e.key.toLowerCase()] = true;
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    if (e.key.toLowerCase() in keys) {
+        keys[e.key.toLowerCase()] = false;
+    }
+});
+
+function createParticles(x, y) {
+    for (let i = 0; i < 10; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.width = Math.random() * 4 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        document.body.appendChild(particle);
+        setTimeout(() => particle.remove(), 1000);
+    }
+}
+
+function drawPaddle(x, y, width, height) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'white';
+    
+    if (equippedPaddle === 'rainbow_paddle') {
+        const gradient = ctx.createLinearGradient(x, y, x, y + height);
+        gradient.addColorStop(0, 'red');
+        gradient.addColorStop(0.2, 'orange');
+        gradient.addColorStop(0.4, 'yellow');
+        gradient.addColorStop(0.6, 'green');
+        gradient.addColorStop(0.8, 'blue');
+        gradient.addColorStop(1, 'violet');
+        ctx.fillStyle = gradient;
+    } else if (equippedPaddle === 'gold_paddle') {
+        const gradient = ctx.createLinearGradient(x, y, x, y + height);
+        gradient.addColorStop(0, '#FFD700');
+        gradient.addColorStop(0.5, '#FFA500');
+        gradient.addColorStop(1, '#FFD700');
+        ctx.fillStyle = gradient;
+    } else if (equippedPaddle === 'santa_paddle') {
+        ctx.fillStyle = '#ff424f'; // Santa Paddle color
+    } else if (equippedPaddle === 'candy_cane_paddle') {
+        ctx.fillStyle = '#d50000'; // Candy Cane Paddle color
+    } else if (equippedPaddle === 'elf_paddle') {
+        ctx.fillStyle = '#007f00'; // Elf Paddle color
+    }
+    
+    ctx.beginPath();
+    const radius = 5;
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.fill();
+
+    // Add Christmas hat
+    ctx.fillStyle = '#ff424f';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - 10, y - 20);
+    ctx.lineTo(x + width + 10, y - 20);
+    ctx.lineTo(x + width, y);
+    ctx.fill();
+    
+    // Hat pom-pom
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(x - 8, y - 20, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+}
+
+function drawBall() {
+    if (!gameActive) return;
+    
+    // Draw trail
+    ball.trail.forEach((pos, index) => {
+        const alpha = (index / ball.trail.length) * 0.3;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, ball.radius * (index / ball.trail.length), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.fill();
+        ctx.closePath();
+    });
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    
+    if (equippedBall === 'neon_ball') {
+        ctx.fillStyle = '#00ff00';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#00ff00';
+    } else if (equippedBall === 'fire_ball') {
+        const gradient = ctx.createRadialGradient(
+            ball.x, ball.y, 0,
+            ball.x, ball.y, ball.radius
+        );
+        gradient.addColorStop(0, '#ff0');
+        gradient.addColorStop(1, '#f00');
+        ctx.fillStyle = gradient;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#f00';
+    } else if (equippedBall === 'ornament_ball') {
+        ctx.fillStyle = '#ff0000'; // Ornament Ball color
+    } else if (equippedBall === 'snow_ball') {
+        ctx.fillStyle = '#ffffff'; // Snow Ball color
+    } else if (equippedBall === 'gift_ball') {
+        ctx.fillStyle = '#28a745'; // Gift Box Ball color
+    } else {
+        ctx.fillStyle = 'white';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'white';
+    }
+    
+    ctx.fill();
+    ctx.closePath();
+    ctx.restore();
+}
+
+function updateAI() {
+    paddle2.aiMistakeCounter++;
+    
+    if (paddle2.aiMistakeCounter > 60) {
+        paddle2.aiMistakeCounter = 0;
+        if (Math.random() < 0.3) {
+            return;
+        }
+    }
+
+    const paddleCenter = paddle2.y + paddle2.height / 2;
+    const ballCenter = ball.y;
+    const difference = paddleCenter - ballCenter;
+
+    if (Math.abs(difference) > 10) {
+        if (difference > 0) {
+            paddle2.y -= paddle2.currentSpeed;
+        } else {
+            paddle2.y += paddle2.currentSpeed;
+        }
+    }
+}
+
+function movePaddles() {
+    if (!gameActive) return;
+    
+    const currentTime = Date.now();
+    const deltaTime = (currentTime - lastMoveTime) / 1000;
+    lastMoveTime = currentTime;
+
+    paddle1.currentSpeed = Math.max(paddle1.dy, paddle1.currentSpeed - speedDecayRate);
+    paddle2.currentSpeed = Math.max(paddle2.dy, paddle2.currentSpeed - speedDecayRate);
+
+    if (keys.w && paddle1.y > 0) {
+        paddle1.currentSpeed = Math.min(paddle1.maxSpeed, paddle1.currentSpeed + paddle1.acceleration);
+        paddle1.y -= paddle1.currentSpeed;
+    }
+    if (keys.s && paddle1.y + paddle1.height < canvas.height) {
+        paddle1.currentSpeed = Math.min(paddle1.maxSpeed, paddle1.currentSpeed + paddle1.acceleration);
+        paddle1.y += paddle1.currentSpeed;
+    }
+
+    updateAI();
+
+    paddle1.y = Math.max(0, Math.min(canvas.height - paddle1.height, paddle1.y));
+    paddle2.y = Math.max(0, Math.min(canvas.height - paddle2.height, paddle2.y));
+}
+
+function moveBall() {
+    if (!gameActive) return;
+    
+    ball.trail.push({x: ball.x, y: ball.y});
+    if (ball.trail.length > 5) {
+        ball.trail.shift();
+    }
+
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+        ball.dy *= -1;
+        createParticles(ball.x, ball.y);
+    }
+
+    if (ball.dx < 0) {
+        if (ball.x - ball.radius < paddle1.x + paddle1.width &&
+            ball.y > paddle1.y &&
+            ball.y < paddle1.y + paddle1.height) {
+            ball.dx *= -1;
+            ball.speed += 0.2;
+            createParticles(ball.x, ball.y);
+            addCoins(1);
+            updateQuests('hit_streak');
+        }
+    } else {
+        if (ball.x + ball.radius > paddle2.x &&
+            ball.y > paddle2.y &&
+            ball.y < paddle2.y + paddle2.height) {
+            ball.dx *= -1;
+            ball.speed += 0.2;
+            createParticles(ball.x, ball.y);
+        }
+    }
+
+    if (ball.x < 0) {
+        paddle2.score++;
+        player2ScoreElement.textContent = paddle2.score;
+        createParticles(ball.x, ball.y);
+        resetBall();
+    } else if (ball.x > canvas.width) {
+        paddle1.score++;
+        player1ScoreElement.textContent = paddle1.score;
+        addCoins(5);
+        createParticles(ball.x, ball.y);
+        resetBall();
+        updateQuests('win_games');
+    }
+}
+
+function resetBall() {
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height / 2;
+    ball.dx = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+    ball.dy = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+    ball.trail = [];
+}
+
+function draw() {
+    if (!gameActive) return;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawPaddle(paddle1.x, paddle1.y, paddle1.width, paddle1.height);
+    drawPaddle(paddle2.x, paddle2.y, paddle2.width, paddle2.height);
+    drawBall();
+}
+
+function gameLoop() {
+    if (!gameActive) return;
+    
+    movePaddles();
+    moveBall();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+function triggerRandomEvent() {
+    const event = events[Math.floor(Math.random() * events.length)];
+    const eventElement = document.createElement('div');
+    eventElement.className = 'event-notification';
+    eventElement.textContent = event.name;
+    document.body.appendChild(eventElement);
+    
+    event.start();
+    activeEvents.push(event);
+    
+    setTimeout(() => {
+        event.end();
+        activeEvents = activeEvents.filter(e => e !== event);
+        eventElement.remove();
+    }, event.duration);
+}
+
+function updateQuests(questType, amount = 1) {
+    activeQuests.forEach(quest => {
+        if (quest.id === questType) {
+            quest.progress = Math.min(quest.progress + amount, quest.target);
+            updateQuestDisplay();
+            
+            if (quest.progress >= quest.target) {
+                addCoins(quest.reward);
+                showNotification(`Quest Complete! Earned ${quest.reward} coins!`);
+                activeQuests = activeQuests.filter(q => q.id !== quest.id);
+            }
+        }
+    });
+}
+
+function updateQuestDisplay() {
+    const questPanel = document.getElementById('questPanel');
+    if (!questPanel) return;
+    
+    questPanel.innerHTML = '<h3>Christmas Quests</h3>';
+    activeQuests.forEach(quest => {
+        const percentage = (quest.progress / quest.target) * 100;
+        questPanel.innerHTML += `
+            <div class="quest-item">
+                <div>${quest.name}</div>
+                <div>${quest.description}</div>
+                <div>${quest.progress}/${quest.target}</div>
+                <div class="quest-progress">
+                    <div class="quest-progress-bar" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'event-notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 3000);
+}
+</script>
+</body>
+</html>
